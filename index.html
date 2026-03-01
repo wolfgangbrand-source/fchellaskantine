@@ -1,18 +1,16 @@
-function loadImages() {
-    const imageFiles = [
-        'werbescreen/image1.jpg',
-        'werbescreen/image2.jpg',
-        'werbescreen/image3.jpg'
-        // Add additional image paths as needed
-    ];
-
-    const slidesContainer = document.getElementById('slides');
-
-    imageFiles.forEach((imageFile) => {
-        const slide = document.createElement('div');
-        const img = document.createElement('img');
-        img.src = imageFile;
-        slide.appendChild(img);
-        slidesContainer.appendChild(slide);
-    });
-}
+<html>
+<head>
+    <title>Fchellaskantine</title>
+</head>
+<body>
+    <h1>Welcome to the Fchellaskantine!</h1>
+    <script>
+        function loadImages() {
+            const img = document.createElement('img');
+            img.src = 'werbescreen/bild.jpg';
+            document.body.appendChild(img);
+        }
+        loadImages();
+    </script>
+</body>
+</html>
