@@ -1,8 +1,6 @@
-// Updated loadImages function
 function loadImages() {
-    const images = ['bild.jpg']; // Load image directly
-    // Existing code for loading images
-    images.forEach(image => {
-        // Code to handle image loading
-    });
+    const img = new Image();
+    img.src = 'werbescreen/bild.jpg';
+    const container = document.getElementById('image-container');
+    container.appendChild(img);
 }
