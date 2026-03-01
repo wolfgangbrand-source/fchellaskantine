@@ -1,16 +1,20 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fchellaskantine</title>
-</head>
-<body>
-    <h1>Welcome to the Fchellaskantine!</h1>
     <script>
         function loadImages() {
-            const img = document.createElement('img');
-            img.src = 'werbescreen/bild.jpg';
+            const imagePath = 'werbescreen/bild.jpg';
+            const img = new Image();
+            img.src = imagePath;
             document.body.appendChild(img);
         }
-        loadImages();
+        window.onload = loadImages;
     </script>
+</head>
+<body>
+    <h1>Welcome to Fchellaskantine</h1>
 </body>
 </html>
