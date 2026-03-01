@@ -1,20 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fchellaskantine</title>
-    <script>
-        function loadImages() {
-            const imagePath = 'werbescreen/bild.jpg';
-            const img = new Image();
-            img.src = imagePath;
-            document.body.appendChild(img);
-        }
-        window.onload = loadImages;
-    </script>
-</head>
-<body>
-    <h1>Welcome to Fchellaskantine</h1>
-</body>
+<!DOCTYPE html> 
+<html lang="de"> 
+    <head> 
+        <meta charset="UTF-8"> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Werbescreen Slideshow</title> 
+        
+        <style> 
+            body { 
+                margin: 0; 
+                background: #000; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+            } 
+            
+            .slideshow { 
+                width: 100%; 
+                max-width: 1080px; 
+                height: auto; 
+                position: relative; 
+                overflow: hidden; 
+            } 
+            .slideshow img { 
+                width: 100%; 
+                display: none; 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+            } 
+            .slideshow img.active { 
+                display: block; 
+            } 
+        </style> 
+    </head> 
+    
+    <body> 
+        <div class="slideshow"> 
+            <img src="werbescreen/bild1.jpg" class="active"> 
+            <img src="werbescreen/bild2.jpg"> 
+            <img src="werbescreen/bild3.jpg"> 
+            <img src="werbescreen/bild4.jpg"> 
+        </div> 
+        
+        <script> 
+            let index = 0; 
+            const bilder = document.querySelectorAll('.slideshow img'); 
+            
+            function wechseln() { 
+                bilder[index].classList.remove('active'); 
+                index = (index + 1) % bilder.length; 
+                bilder[index].classList.add('active'); 
+            } 
+            
+            setInterval(wechseln, 4000); // alle 4 Sekunden wechseln
+        </script> 
+    </body> 
 </html>
