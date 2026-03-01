@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildschirmschau - Vollbild</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .slideshow-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .slide.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 50px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .slide-counter {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .fullscreen-toggle {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        .fullscreen-toggle:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: #FF6B6B;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .keyboard-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slideshow-container">
+        <button class="fullscreen-toggle" id="fullscreenBtn">⛶ Vollbild</button>
+        
+        <div id="slidesContainer"></div>
+
+        <div class="progress-bar" id="progressBar"></div>
+
+        <div class="slide-counter" id="slideCounter">0 / 0</div>
+
+        <div class="controls">
+            <button id="prevBtn">← Zurück</button>
+            <button id="playPauseBtn">▶ Abspielen</button>
+            <button id="nextBtn">Weiter →</button>
+        </div>
+
+        <div class="keyboard-hint">
+            ← → Pfeiltasten | Leertaste zum Abspielen | F Vollbild | ESC Beenden
+        </div>
+    </div>
+
+    <script>
+        const slidesContainer = document.getElementById('slidesContainer');
+        const slideCounter = document.getElementById('slideCounter');
+        const progressBar = document.getElementById('progressBar');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        let slides = [];
+        let currentSlide = 0;
+        let isAutoPlay = false;
+        let autoPlayInterval = null;
+        const AUTO_PLAY_DELAY = 5000; // 5 Sekunden pro Folie
+
+        // Bilder aus werbescreen-Ordner laden
+        async function loadImages() {
+            try {
+                const response = await fetch('werbescreen/');
+                const html = await response.text();
+                
+                // Extrahiere Bilddateinamen aus der HTML-Antwort
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = doc.querySelectorAll('a');
+                
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+                const imageFiles = [];
+
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && imageExtensions.some(ext => href.toLowerCase().endsWith(ext))) {
+                        imageFiles.push(href);
+                    }
+                });
+
+                if (imageFiles.length === 0) {
+                    slidesContainer.innerHTML = '<div class="loading">Keine Bilder im werbescreen-Ordner gefunden</div>';
+                    return;
+                }
+
+                // Erstelle Slide-Elemente
+                imageFiles.forEach((file, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'slide' + (index === 0 ? ' active' : '');
+                    
+                    const img = document.createElement('img');
+                    img.src = `werbescreen/${file}`;
+                    img.alt = `Folie ${index + 1}`;
+                    
+                    slide.appendChild(img);
+                    slidesContainer.appendChild(slide);
+                    slides.push(slide);
+                });
+
+                slideCounter.textContent = `1 / ${slides.length}`;
+                updateProgressBar();
+
+            } catch (error) {
+                console.error('Fehler beim Laden der Bilder:', error);
+                slidesContainer.innerHTML = `<div class="loading">Fehler beim Laden der Bilder. Stelle sicher, dass der werbescreen-Ordner existiert.</div>`;
+            }
+        }
+
+        function showSlide(n) {
+            if (slides.length === 0) return;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide].classList.add('active');
+            slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+            updateProgressBar();
+        }
+
+        function nextSlide() {
+            if (slides.length === 0) return;
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            if (slides.length === 0) return;
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(currentSlide);
+        }
+
+        function toggleAutoPlay() {
+            isAutoPlay = !isAutoPlay;
+            playPauseBtn.textContent = isAutoPlay ? '⏸ Pause' : '▶ Abspielen';
+
+            if (isAutoPlay) {
+                autoPlayInterval = setInterval(nextSlide, AUTO_PLAY_DELAY);
+            } else {
+                clearInterval(autoPlayInterval);
+            }
+        }
+
+        function updateProgressBar() {
+            if (slides.length === 0) return;
+            const progress = ((currentSlide + 1) / slides.length) * 100;
+            progressBar.style.width = progress + '%';
+        }
+
+        function toggleFullscreen() {
+            const elem = document.documentElement;
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => {
+                    alert(`Fehler beim Aktivieren des Vollbildmodus: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Event Listener
+        prevBtn.addEventListener('click', prevSlide);
+        nextBtn.addEventListener('click', nextSlide);
+        playPauseBtn.addEventListener('click', toggleAutoPlay);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+        // Tastatursteuerung
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    prevSlide();
+                    if (isAutoPlay) toggleAutoPlay();
+                    break;
+                case 'ArrowRight':
+                    nextSlide();
+                    if (isAutoPlay) toggleAutoPlay();
+                    break;
+                case ' ': 
+                    e.preventDefault();
+                    toggleAutoPlay();
+                    break;
+                case 'f':
+                case 'F':
+                    toggleFullscreen();
+                    break;
+                case 'Escape':
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    }
+                    break;
+            }
+        });
+
+        // Bilder beim Laden der Seite laden
+        loadImages();
+    </script>
+</body>
+</html>
